@@ -1,0 +1,28 @@
+{
+  "title": "Comment Saver",
+  "name": "comment-saver",
+  "version": "0.0.1",
+  "description": "Records blog comments in bookmarks",
+  "main": "index.js",
+  "author": "Peter Gerdes gerdes@invariant.org",
+  "engines": {
+    "firefox": ">=38.0a1",
+    "fennec": ">=38.0a1"
+  },
+  "license": "0BSD",
+  "options_ui": {
+    "page": "options/options.html"
+  },
+  "permissions": [
+    "bookmarks",
+    "storage"
+  ],
+  "keywords": [
+    "jetpack"
+  ],
+  "applications": {
+    "gecko": {
+      "id": "settings-example@mozilla.org"
+    }
+  }
+}
