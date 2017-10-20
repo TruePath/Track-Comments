@@ -1,29 +1,33 @@
 
-var blog_obj = null;
+var blog = null;
+var debug = false;
 
-function interceptor(e) {
+
+function capture_comment(e) {
     var frm = e ? e.target : this;
 
     e.stopPropagation();
 
 	e.preventDefault();
-	blog_obj.bookmark_comment(frm);
+	blog.bookmark_comment(frm);
 
 }
 
 
-function interceptor_setup( ){
-// capture the onsubmit event on all forms
-window.addEventListener('submit', interceptor, true);
+function capture_comment_setup( ){
 
-// If a script calls someForm.submit(), the onsubmit event does not fire,
-// so we need to redefine the submit method of the HTMLFormElement class.
-HTMLFormElement.prototype.real_submit = HTMLFormElement.prototype.submit;
-HTMLFormElement.prototype.submit = interceptor;
-blog_obj = blog_factory();
+
+    // If a script calls someForm.submit(), the onsubmit event does not fire,
+    // so we need to redefine the submit method of the HTMLFormElement class.
+    HTMLFormElement.prototype.real_submit = HTMLFormElement.prototype.submit;
+    HTMLFormElement.prototype.submit = interceptor;
+    blog = detect_blog();
+    if (blog_obj) {
+        window.addEventListener('submit', capture_comment, true);
+    }
 }
 
-function blog_factory() {
+function detect_blog() {
     var metas = document.getElementsByTagName('meta');
     var generator = 'not_found';
     for (var i = 0; i < metas.length; i++) {
@@ -42,22 +46,63 @@ function blog_factory() {
       } else if (generator.indexOf('typepad') > -1) {
         return new Typepad_blog();
       } else {
-        return new Blog();
+        return false;
+        // Add code to check if is explicitly listed as blog
+        // return new Blog();
       }
     }
 }
 
-function Blog() {
-    this.reset_blog();
+class Comment {
+    constructor(article_url = "", article_title = "") {
+        this.author = "";
+        this.email = "";
+        this.url = "";
+        this.title = "";
+        this.comment = "";
+        this.article_title = article_title;
+        this.article_url = article_url;
+        this.in_reply_to = this.article_url; // Url of article or comment this replies to
+    }
 }
 
-Blog.prototype.reset_blog = function() {
-    this.author = "";
-    this.email = "";
-    this.url = "";
-    this.title = "Untitled Comment on: " + document.title;
-    this.comment = "";
-};
+class Blog {
+    constructor() {
+        this.reset_comment();
+        this.form = false;
+    }
+
+    reset_comment() {
+        this.comment = new Comment();
+    }
+
+    capture_submit(e) {
+        target = e.target;
+        if (! target) {return;}
+
+        if (this.form) {
+            form = this.form;
+        } else if ("tagName" in target && target.tagName == 'form') {
+            form = target;
+        } else if ("tagName" in target && target.tagName == 'input' && target.closest('form')) {
+            form = target.closest('form');
+        } else {
+            form = document.getElementsByTagName()
+        }
+
+    e.stopPropagation();
+
+    e.preventDefault();
+    blog.bookmark_comment(frm);
+    }
+
+    bookmark_comment(frm) {
+            if (this.parse_comment(frm)) this.create_bookmark();
+            this.reset_blog();
+    }
+}
+
+
 
 Blog.prototype.bookmark_comment = function(frm) {
     if (this.parse_comment(frm)) this.create_bookmark();
@@ -110,13 +155,11 @@ function create_bookmark(uri, title, notes) {
 
 }
 
-function add_to_delicious(uri, title, notes) {
-    node=document.createElement("SCRIPT");
-    node.type="text/javascript";
-    delurl= window.location.protocol + "//del.icio.us/save/get_bookmarklet_save?url=";
-    node.src=delurl+encodeURIComponent(uri)+"&title="+encodeURIComponent(title)+"&notes="+encodeURIComponent(notes);
-    document.body.appendChild(node);
-    document.body.removeChild(node);
-}
+browser.storage.local.get("options").then( (opts) => { 
+    if ('debug' in opts) {debug = opts.debug;} 
+    capture_comment_setup();
+}).catch(       (reason) => {
+            console.log('Couldn\t set debug  ('+reason+') here.');
+            }
+);
 
-interceptor_setup();

@@ -5,24 +5,36 @@
   "description": "Records blog comments in bookmarks",
   "main": "index.js",
   "author": "Peter Gerdes gerdes@invariant.org",
-  "engines": {
-    "firefox": ">=38.0a1",
-    "fennec": ">=38.0a1"
+  "applications": {
+    "gecko": {
+      "strict_min_version": "54.0a1"
+    }
+  },
+  "browser_action": {
+    "default_icon": {
+      "16": "icons/messages.svg",
+      "32": "icons/messages.svg",
+      "48": "icons/messages.svg",
+      "64": "icons/messages.svg"
+    }
+  },
+  "content_scripts": [
+  {
+    "matches": ["*://*/*"],
+    "js": ["capture_comments.js"]
   },
   "license": "0BSD",
   "options_ui": {
-    "page": "options/options.html"
+    "page": "options/options.html",
+    "browser_style": true
   },
   "permissions": [
     "bookmarks",
     "storage"
   ],
-  "keywords": [
-    "jetpack"
-  ],
   "applications": {
     "gecko": {
-      "id": "settings-example@mozilla.org"
+      "id": "comment-saver@invariant.org"
     }
   }
 }
