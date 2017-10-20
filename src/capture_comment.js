@@ -66,19 +66,11 @@ function save_comment(comment) {
 
 function capture_comment_setup( ){
 
-
-    // If a script calls someForm.submit(), the onsubmit event does not fire,
-    // so we need to redefine the submit method of the HTMLFormElement class.
-    HTMLFormElement.prototype.real_submit = HTMLFormElement.prototype.submit;
-    HTMLFormElement.prototype.submit = interceptor;
     blog = Blog.factory(save_comment);
-        window.addEventListener('submit', blog.capture_submit, true);
-    }
+    blog.capture();
 }
 
-function detect_blog() {
 
-}
 
 
 
@@ -87,6 +79,7 @@ class Blog {
         this.comment = null;
         this.form = null;
         this.callback = oncapture;
+        this._bound_capture_submit = null;
     }
 
     static factory(oncapture) {
@@ -115,9 +108,33 @@ class Blog {
         }
     }
 
+    capture() {
+        var bound_capture_submit = this.capture_submit.bind(this);
+        window.addEventListener('submit', bound_capture_submit, true);
+        // If a script calls someForm.submit(), the onsubmit event does not fire,
+        // so we need to redefine the submit method of the HTMLFormElement class.
+        var interceptor = function() { 
+                            bound_capture_submit(this);  
+                            this.real_submit(); 
+                          };
+        HTMLFormElement.prototype.real_submit = HTMLFormElement.prototype.submit;
+        HTMLFormElement.prototype.submit = interceptor;
+        this._bound_capture_submit = bound_capture_submit;
+    }
+
+    stop_capture() {
+        window.removeEventListener('submit', this._bound_capture_submit, true);
+        if ('real_submit' in HTMLFormElement.prototype) {
+            HTMLFormElement.prototype.submit = HTMLFormElement.prototype.real_submit;
+        }
+    }
+
 
     capture_submit(e) {
-        var target = e.target;
+        var target = e; // If e isn't instance of Event we are being passed form directly.
+        if (e instanceof Event) {
+            target = e.target;
+        }
         if (! target) {return;}
 
             if (this.form) {
